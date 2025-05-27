@@ -1,44 +1,36 @@
-from telethon import TelegramClient, events
 import asyncio
-
-from GCalendar import create_event_in_calendar
+from functools import partial
+from openai import OpenAI
+from TelegramListener import start_telegram_listener
 from MistralAI import analyze_message
+from GCalendar import create_event_in_calendar
+from TelegramNotification import notify_user
 from configLoader import load_config
 
 config = load_config()
 
-api_id = int(config["telegram_API_ID"])
-api_hash = config["telegram_API_hash"]
-TARGET_CHATS = config["TARGET_CHATS"]
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=config["mistralAI_key"],
+)
+BOT_TOKEN = config["telegram_notify_token"]
+CHAT_ID = config["telegram_notify_chat_id"]
 
-client = TelegramClient('session_name', api_id, api_hash)
+async def on_message_received(text: str, metadata: dict):
+    print("📩 Новое сообщение:\n", metadata.get("log_line", text))
 
-@client.on(events.NewMessage(chats=TARGET_CHATS))
-async def handler(event):
-    sender = await event.get_sender()
-    if sender:
-        name = sender.username or sender.first_name or "Unknown"
-    else:
-        name = "Remedycore"
-    text = event.raw_text
-    chat = await event.get_chat()
-    chat_name = getattr(chat, 'title', chat.username or str(chat.id))
-    topic_id = getattr(event.message, 'thread_id', None)
-
-    log_line = f"[{chat_name}] (Топик: {topic_id}) {name}: {text}"
-    print("📩 Новое сообщение:\n", log_line)
-
-    result = analyze_message(text)
+    result = analyze_message(text, client)
     if result.get("has_event"):
         print("✅ Найдено событие:", result["event"])
-        create_event_in_calendar(result["event"])
+        gcalendarLink = create_event_in_calendar(result["event"])
+        notify_user(BOT_TOKEN, CHAT_ID, text, result["event"], gcalendarLink)
     else:
         print("ℹ️ Событий не обнаружено.")
 
 async def main():
     print("🤖 Бот запущен. Ожидаем новые сообщения...")
-    await client.start()
-    await client.run_until_disconnected()
+    await start_telegram_listener(on_message_received, config)
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())

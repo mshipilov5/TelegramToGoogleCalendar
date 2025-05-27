@@ -1,7 +1,6 @@
-from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-import datetime
+from datetime import datetime, timedelta
 
 # Если вы редактируете календарь, нужна эта область
 SCOPES = ['https://www.googleapis.com/auth/calendar']
@@ -22,9 +21,20 @@ def create_event_in_calendar(event: dict):
     description = event.get("description", "")
 
     if time:
-        # Событие со временем (datetime-local)
-        start_datetime = f"{date}T{time}:00"
-        end_datetime = f"{date}T{time}:00"
+        try:
+            if "-" in time:
+                start_str, end_str = time.split("-")
+                start_datetime = f"{date}T{start_str}:00"
+                end_datetime = f"{date}T{end_str}:00"
+            else:
+                # Одно время: "10:00"
+                start = datetime.fromisoformat(f"{date}T{time}")
+                end = start + timedelta(hours=1)
+                start_datetime = start.isoformat()
+                end_datetime = end.isoformat()
+        except Exception as e:
+            print("❌ Ошибка обработки времени:", e)
+            return
 
         body = {
             "summary": title,
@@ -33,13 +43,12 @@ def create_event_in_calendar(event: dict):
             "end": {"dateTime": end_datetime, "timeZone": "Europe/Moscow"},
         }
     else:
-        # Событие без времени (all-day)
         body = {
             "summary": title,
             "description": description,
             "start": {"date": date},
-            "end": {"date": date},
+            "end": {"date": (datetime.fromisoformat(date) + timedelta(days=1)).date().isoformat()},
         }
 
     event = service.events().insert(calendarId='primary', body=body).execute()
-    print(f"✅ Событие создано: {event.get('htmlLink')}")
+    return {event.get('htmlLink')}
