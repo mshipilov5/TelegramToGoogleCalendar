@@ -1,0 +1,9 @@
+{
+  "info": {
+    "mistralAI_key" : "",
+    "telegram_API_ID" : "",
+    "telegram_API_hash" : "",
+    "name" : "",
+    "TARGET_CHATS" : []
+  }
+}
