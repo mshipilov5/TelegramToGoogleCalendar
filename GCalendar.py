@@ -1,6 +1,8 @@
+from exceptiongroup import catch
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
+from googleapiclient.errors import HttpError
 from datetime import datetime, timedelta
 import os
 
@@ -70,7 +72,8 @@ def create_event_in_calendar(event: dict):
     try:
         event_result = service.events().insert(calendarId='primary', body=body).execute()
         return {
-            event_result.get('htmlLink')
+            "link": event_result.get('htmlLink'),
+            "event_id": event_result.get('id')
         }
     except Exception as e:
         print("❌ Ошибка создания события в Google Calendar:", e)
@@ -78,7 +81,20 @@ def create_event_in_calendar(event: dict):
 
 
 
-def delete_event_from_calendar(event_id: str):
-    creds = Credentials.from_authorized_user_file("token.json", ["https://www.googleapis.com/auth/calendar"])
-    service = build("calendar", "v3", credentials=creds)
-    service.events().delete(calendarId='primary', eventId=event_id).execute()
+def delete_event_from_calendar(event_id: str) -> bool:
+    try:
+        creds = Credentials.from_authorized_user_file("token.json", ["https://www.googleapis.com/auth/calendar"])
+        service = build("calendar", "v3", credentials=creds)
+        service.events().delete(calendarId='primary', eventId=event_id).execute()
+        print(f"🗑️ Событие {event_id} удалено.")
+        return True  # Всё ок
+    except HttpError as e:
+        if e.resp.status == 410:
+            print(f"⚠️ Событие {event_id} уже было удалено.")
+            return False  # Уже удалено
+        else:
+            raise e
+
+async def delete_handler_async(event_id: str) -> bool:
+    return delete_event_from_calendar(event_id)
+

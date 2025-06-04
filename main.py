@@ -3,8 +3,8 @@ from functools import partial
 from openai import OpenAI
 from TelegramListener import start_telegram_listener
 from MistralAI import analyze_message
-from GCalendar import create_event_in_calendar
-from TelegramNotification import notify_user
+from GCalendar import create_event_in_calendar, delete_handler_async
+from TelegramNotification import notify_user, start_notification_server
 from configLoader import load_config
 
 config = load_config()
@@ -22,14 +22,19 @@ async def on_message_received(text: str, metadata: dict):
     result = analyze_message(text, client, config["context"])
     if result.get("has_event"):
         print("✅ Найдено событие:", result["event"])
-        gcalendar_link = create_event_in_calendar(result["event"])
-        notify_user(BOT_TOKEN, CHAT_ID, text, result["event"], gcalendar_link)
+        gcalendar_info = create_event_in_calendar(result["event"])
+        notify_user(BOT_TOKEN, CHAT_ID, text, result["event"], gcalendar_info)
     else:
         print("ℹ️ Событий не обнаружено.")
 
+
 async def main():
-    print("🤖 Бот запущен. Ожидаем новые сообщения...")
-    await start_telegram_listener(on_message_received, config)
+    print("🤖 Бот уведомитель запущен. Ожидаем новые сообщения...")
+    print("🤖 Бот слушатель запущен. Ожидаем новые сообщения...")
+    await asyncio.gather(
+        start_notification_server(delete_handler_async),
+        start_telegram_listener(on_message_received, config)
+    )
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
