@@ -4,6 +4,9 @@
     "telegram_API_ID" : "",
     "telegram_API_hash" : "",
     "name" : "",
-    "TARGET_CHATS" : []
+    "TARGET_CHATS" : [],
+    "telegram_notify_token": "",
+    "telegram_notify_chat_id": "",
+    "context": ""
   }
 }

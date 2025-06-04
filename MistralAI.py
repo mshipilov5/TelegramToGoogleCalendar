@@ -17,10 +17,10 @@ def load_prompt_template():
 
 PROMPT_TEMPLATE = load_prompt_template()
 
-def analyze_message(text: str, client) -> dict:
+def analyze_message(text: str, client, context) -> dict:
     now = datetime.now()
     date_str = f"сегодня {now.day} {now.strftime('%B')} {now.year} года, {now.strftime('%H:%M')} {weekday_ru[now.weekday()]}"
-    prompt = PROMPT_TEMPLATE.format(date_str=date_str, text=text)
+    prompt = PROMPT_TEMPLATE.format(context=context ,date_str=date_str, text=text)
 
     response = client.chat.completions.create(
         model="mistralai/devstral-small:free",

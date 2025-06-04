@@ -1,17 +1,22 @@
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+from google.oauth2.credentials import Credentials
 from datetime import datetime, timedelta
+import os
 
-# Если вы редактируете календарь, нужна эта область
 SCOPES = ['https://www.googleapis.com/auth/calendar']
+TOKEN_PATH = 'token.json'
 
 def create_event_in_calendar(event: dict):
     creds = None
-    if creds is None:
-        flow = InstalledAppFlow.from_client_secrets_file(
-            'client_secret.json', SCOPES
-        )
+
+    if os.path.exists(TOKEN_PATH):
+        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
+    else:
+        flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
         creds = flow.run_local_server(port=0)
+        with open(TOKEN_PATH, 'w') as token:
+            token.write(creds.to_json())
 
     service = build('calendar', 'v3', credentials=creds)
 
@@ -27,7 +32,6 @@ def create_event_in_calendar(event: dict):
                 start_datetime = f"{date}T{start_str}:00"
                 end_datetime = f"{date}T{end_str}:00"
             else:
-                # Одно время: "10:00"
                 start = datetime.fromisoformat(f"{date}T{time}")
                 end = start + timedelta(hours=1)
                 start_datetime = start.isoformat()
@@ -39,16 +43,42 @@ def create_event_in_calendar(event: dict):
         body = {
             "summary": title,
             "description": description,
-            "start": {"dateTime": start_datetime, "timeZone": "Europe/Moscow"},
-            "end": {"dateTime": end_datetime, "timeZone": "Europe/Moscow"},
+            "start": {
+                "dateTime": start_datetime,
+                "timeZone": "Europe/Moscow"
+            },
+            "end": {
+                "dateTime": end_datetime,
+                "timeZone": "Europe/Moscow"
+            },
         }
     else:
+        try:
+            date_obj = datetime.fromisoformat(date)
+            next_day = (date_obj + timedelta(days=1)).date().isoformat()
+        except Exception as e:
+            print("❌ Ошибка обработки даты:", e)
+            return
+
         body = {
             "summary": title,
             "description": description,
             "start": {"date": date},
-            "end": {"date": (datetime.fromisoformat(date) + timedelta(days=1)).date().isoformat()},
+            "end": {"date": next_day},
         }
 
-    event = service.events().insert(calendarId='primary', body=body).execute()
-    return {event.get('htmlLink')}
+    try:
+        event_result = service.events().insert(calendarId='primary', body=body).execute()
+        return {
+            event_result.get('htmlLink')
+        }
+    except Exception as e:
+        print("❌ Ошибка создания события в Google Calendar:", e)
+        return
+
+
+
+def delete_event_from_calendar(event_id: str):
+    creds = Credentials.from_authorized_user_file("token.json", ["https://www.googleapis.com/auth/calendar"])
+    service = build("calendar", "v3", credentials=creds)
+    service.events().delete(calendarId='primary', eventId=event_id).execute()

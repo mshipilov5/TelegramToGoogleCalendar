@@ -19,11 +19,11 @@ CHAT_ID = config["telegram_notify_chat_id"]
 async def on_message_received(text: str, metadata: dict):
     print("📩 Новое сообщение:\n", metadata.get("log_line", text))
 
-    result = analyze_message(text, client)
+    result = analyze_message(text, client, config["context"])
     if result.get("has_event"):
         print("✅ Найдено событие:", result["event"])
-        gcalendarLink = create_event_in_calendar(result["event"])
-        notify_user(BOT_TOKEN, CHAT_ID, text, result["event"], gcalendarLink)
+        gcalendar_link = create_event_in_calendar(result["event"])
+        notify_user(BOT_TOKEN, CHAT_ID, text, result["event"], gcalendar_link)
     else:
         print("ℹ️ Событий не обнаружено.")
 
