@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import os
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
-TOKEN_PATH = 'token.json'
+TOKEN_PATH = '../../token.json'
 
 def create_event_in_calendar(event: dict):
     creds = None
@@ -15,7 +15,7 @@ def create_event_in_calendar(event: dict):
     if os.path.exists(TOKEN_PATH):
         creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
     else:
-        flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
+        flow = InstalledAppFlow.from_client_secrets_file('../../client_secret.json', SCOPES)
         creds = flow.run_local_server(port=0)
         with open(TOKEN_PATH, 'w') as token:
             token.write(creds.to_json())
@@ -83,7 +83,7 @@ def create_event_in_calendar(event: dict):
 
 def delete_event_from_calendar(event_id: str) -> bool:
     try:
-        creds = Credentials.from_authorized_user_file("token.json", ["https://www.googleapis.com/auth/calendar"])
+        creds = Credentials.from_authorized_user_file("../../token.json", ["https://www.googleapis.com/auth/calendar"])
         service = build("calendar", "v3", credentials=creds)
         service.events().delete(calendarId='primary', eventId=event_id).execute()
         print(f"🗑️ Событие {event_id} удалено.")

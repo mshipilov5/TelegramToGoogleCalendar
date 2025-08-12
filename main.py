@@ -1,11 +1,10 @@
 import asyncio
-from functools import partial
 from openai import OpenAI
-from TelegramListener import start_telegram_listener
-from MistralAI import analyze_message
-from GCalendar import create_event_in_calendar, delete_handler_async
-from TelegramNotification import notify_user, start_notification_server
-from configLoader import load_config
+from src.telegram.TelegramListener import start_telegram_listener
+from src.ai.MistralAI import analyze_message
+from src.calendar.GCalendar import create_event_in_calendar, delete_handler_async
+from src.telegram.TelegramNotification import notify_user, start_notification_server
+from src.utils.configLoader import load_config
 
 config = load_config()
 

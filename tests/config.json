@@ -1,0 +1,14 @@
+{
+  "info": {
+    "mistralAI_key": "1111111111111111",
+    "telegram_API_ID": "111111111",
+    "telegram_API_hash": "11111111111111111",
+    "name": "Test",
+    "TARGET_CHATS": [
+      "@test"
+    ],
+    "telegram_notify_token": "11111111111111111111111111111",
+    "telegram_notify_chat_id": "1111111111111",
+    "context": "Меня зовут Антом, я ем печенье"
+  }
+}

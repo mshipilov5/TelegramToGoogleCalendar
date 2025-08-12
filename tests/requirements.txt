@@ -1,0 +1,21 @@
+
+# Основные зависимости проекта (должны быть установлены)
+# openai
+# telethon
+# fastapi
+# uvicorn
+# google-auth-oauthlib
+# google-api-python-client
+# requests
+
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.10.0
+pytest-cov>=4.0.0
+
+responses>=0.23.0
+httpx>=0.24.0
+
+asyncio-mqtt>=0.13.0
+
+httpx>=0.24.0
